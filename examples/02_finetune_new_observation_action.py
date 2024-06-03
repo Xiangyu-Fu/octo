@@ -4,7 +4,8 @@ and new action space (bimanual) using a simulated ALOHA cube handover dataset (h
 
 To run this example, first download and extract the dataset from here: https://rail.eecs.berkeley.edu/datasets/example_sim_data.zip
 
-python examples/02_finetune_new_observation_action.py --pretrained_path=hf://rail-berkeley/octo-small-1.5 --data_dir=...
+python examples/02_finetune_new_observation_action.py --pretrained_path=hf://rail-berkeley/octo-small-1.5 --data_dir=/home/stan/workspaces/octo/
+
 """
 from absl import app, flags, logging
 import flax
@@ -30,11 +31,11 @@ from octo.utils.train_utils import (
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string(
-    "pretrained_path", None, "Path to pre-trained Octo checkpoint directory."
+    "pretrained_path", "hf://rail-berkeley/octo-small-1.5", "Path to pre-trained Octo checkpoint directory."
 )
-flags.DEFINE_string("data_dir", None, "Path to finetuning dataset, in RLDS format.")
-flags.DEFINE_string("save_dir", None, "Directory for saving finetuning checkpoints.")
-flags.DEFINE_integer("batch_size", 128, "Batch size for finetuning.")
+flags.DEFINE_string("data_dir", "/home/stan/workspaces/octo/", "Path to finetuning dataset, in RLDS format.")
+flags.DEFINE_string("save_dir", "/home/stan/saved_checkpoints", "Directory for saving finetuning checkpoints.")
+flags.DEFINE_integer("batch_size", 64, "Batch size for finetuning.")
 
 flags.DEFINE_bool(
     "freeze_transformer",
@@ -84,7 +85,7 @@ def main(_):
     train_data_iter = (
         dataset.repeat()
         .unbatch()
-        .shuffle(10000)  # can reduce this if RAM consumption too high
+        .shuffle(5000)  # can reduce this if RAM consumption too high
         .batch(FLAGS.batch_size)
         .iterator()
     )
@@ -182,16 +183,16 @@ def main(_):
 
     # run finetuning loop
     logging.info("Starting finetuning...")
-    for i in tqdm.tqdm(range(5000), total=5000, dynamic_ncols=True):
+    for i in tqdm.tqdm(range(500), total=500, dynamic_ncols=True):
         batch = next(train_data_iter)
         train_state, update_info = train_step(train_state, batch)
-        if (i + 1) % 100 == 0:
+        if (i + 1) % 20 == 0:
             update_info = jax.device_get(update_info)
             wandb.log(
                 flax.traverse_util.flatten_dict({"training": update_info}, sep="/"),
                 step=i,
             )
-        if (i + 1) % 1000 == 0:
+        if (i + 1) % 100 == 0:
             # save checkpoint
             train_state.model.save_pretrained(step=i, checkpoint_path=FLAGS.save_dir)
 

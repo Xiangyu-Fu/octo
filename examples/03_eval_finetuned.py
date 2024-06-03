@@ -24,7 +24,7 @@ import jax
 import numpy as np
 import wandb
 
-sys.path.append("path/to/your/act")
+sys.path.append("/home/stan/workspaces/act")
 
 # keep this to register ALOHA sim env
 from envs.aloha_sim_env import AlohaGymEnv  # noqa
@@ -36,7 +36,7 @@ from octo.utils.train_callbacks import supply_rng
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string(
-    "finetuned_path", None, "Path to finetuned Octo checkpoint directory."
+    "finetuned_path", "/home/stan/saved_checkpoints", "Path to finetuned Octo checkpoint directory."
 )
 
 
@@ -84,7 +84,8 @@ def main(_):
         obs, info = env.reset()
 
         # create task specification --> use model utility to create task dict with correct entries
-        language_instruction = env.get_task()["language_instruction"]
+        # language_instruction = env.get_task()["language_instruction"]
+        language_instruction = ["pick up the cube"]
         task = model.create_tasks(texts=language_instruction)
 
         # run rollout for 400 steps
